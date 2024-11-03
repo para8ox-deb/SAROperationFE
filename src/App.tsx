@@ -4,6 +4,14 @@ import { ImagePreview } from './components/ImagePreview';
 import { UploadZone } from './components/UploadZone';
 import { config } from './config';
 
+// Helper function to add a timeout to fetch
+const fetchWithTimeout = (url, options = {}, timeout = 120000) => {
+  return Promise.race([
+    fetch(url, options),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out')), timeout))
+  ]);
+};
+
 function App() {
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -42,10 +50,10 @@ function App() {
     formData.append('file', image);
 
     try {
-      const response = await fetch(`${config.apiUrl}/detect`, {
+      const response = await fetchWithTimeout(`${config.apiUrl}/detect`, {
         method: 'POST',
         body: formData,
-      });
+      }, 120000); // Set timeout to 2 minutes (120000 ms)
 
       if (!response.ok) throw new Error('Detection failed');
 
